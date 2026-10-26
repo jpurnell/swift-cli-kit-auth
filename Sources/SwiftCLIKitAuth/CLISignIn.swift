@@ -65,9 +65,35 @@ public enum CLISignIn {
         clock: any Clock<Duration> = ContinuousClock(),
         generator: inout Generator
     ) async throws -> AccessLease {
-        let authentication: Authentication
+        let (authentication, _) = try await SignInRun.authenticate(
+            sources, authenticator: authenticator, admission: admission, presenter: presenter
+        )
+        return await AccessLease(
+            authentication: authentication, sessions: sessions, lifetime: lifetime,
+            reresolveEvery: reresolveEvery,
+            stepUp: StepUp(sources: sources, authenticator: authenticator, presenter: presenter),
+            now: now, clock: clock, generator: &generator
+        )
+    }
+}
+
+/// The sign-in loop `CLISignIn` and the SSH sign-in gate share.
+package enum SignInRun {
+
+    /// Runs sources in order until one's credentials resolve, and checks admission.
+    ///
+    /// A source that doesn't apply, or whose credentials don't resolve, passes to the next; one
+    /// that throws stops the run, a cancellation or end of input rethrown as itself and anything
+    /// else as ``SignInError/failed``. A resolved subject that isn't admitted fails at once. Every
+    /// failure shows ``SignInPrompt/failed`` first.
+    /// - Returns: The authentication, and the credentials that produced it.
+    package static func authenticate(
+        _ sources: [any CredentialSource], authenticator: Authenticator, admission: Admission,
+        presenter: any SignInPresenter
+    ) async throws -> (Authentication, [any Credential]) {
+        let found: (Authentication, [any Credential])
         do {
-            authentication = try await firstAuthentication(sources, authenticator: authenticator, presenter: presenter)
+            found = try await firstResolving(sources, authenticator: authenticator, presenter: presenter)
         } catch SignInError.cancelled {
             throw SignInError.cancelled
         } catch SignInError.inputEnded {
@@ -76,27 +102,22 @@ public enum CLISignIn {
             await presenter.show(.failed)
             throw SignInError.failed
         }
-        guard await admission.admits(authentication) else {
+        guard await admission.admits(found.0) else {
             await presenter.show(.failed)
             throw SignInError.failed
         }
-        return await AccessLease(
-            authentication: authentication, sessions: sessions, lifetime: lifetime,
-            reresolveEvery: reresolveEvery,
-            stepUp: StepUp(sources: sources, authenticator: authenticator, presenter: presenter),
-            now: now, clock: clock, generator: &generator
-        )
+        return found
     }
 
     /// The first source's credentials that resolve, or ``SignInError/failed`` if none do.
-    private static func firstAuthentication(
+    private static func firstResolving(
         _ sources: [any CredentialSource], authenticator: Authenticator, presenter: any SignInPresenter
-    ) async throws -> Authentication {
+    ) async throws -> (Authentication, [any Credential]) {
         let context = SignInContext(presenter: presenter)
         for source in sources {
             guard let credentials = try await source.credentials(context) else { continue }
             if let authentication = await authenticator.authentication(for: credentials) {
-                return authentication
+                return (authentication, credentials)
             }
         }
         throw SignInError.failed
