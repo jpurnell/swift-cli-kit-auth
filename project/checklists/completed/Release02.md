@@ -24,4 +24,4 @@ Remembered command-line sign-in is a separate proposal,
 - [x] `SignInGate.wrap`: remembered key admits with no prompt and the device flow is never
       called; unknown key → device flow → bind → admitted; a source that throws never falls
       through; admission false → "Sign-in failed"; the lease ending ends the session.
-- [ ] Docs, CHANGELOG, guide; gate 0/0, CI green.
+- [x] Docs, CHANGELOG, guide; gate 0/0, CI green (released as 0.2.0, 2026-10-26).

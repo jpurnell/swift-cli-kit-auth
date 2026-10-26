@@ -57,6 +57,7 @@ Sources/SwiftCLIKitAuthSSH/   ConnectionPassword (0.1); SignInGate, SSHKeyStore 
 | `Admission` | Who the app admits: subjects, attributes, minimum assurance, factor algorithms, custom |
 | `AccessLease` | An admitted session's lifetime: re-resolves a `SessionStore` token on an interval; step-up via `reverify` |
 | `CLISignIn` | Experience A: run sources, authenticate, admit, and return a lease |
+| `SSHKeyStore` / `ConnectionKey` / `SignInGate` | Experience B: remembered SSH keys, and the gate that signs each SSH connection in |
 | `ConnectionPassword` | An `SSHClientVerifier`: the SSH password, resolved through the `Authenticator` and admitted, attached as the session's `Authentication` |
 
 ### Data Flow
@@ -93,7 +94,8 @@ SignInPresenter ◀────────────────────�
 
 ### What's Next
 - [x] 0.1.0 released 2026-10-25: public repository `jpurnell/swift-cli-kit-auth`, proprietary licence (the user's decisions), CI green.
-- [ ] 0.2: experience B (see Roadmap).
+- [x] 0.2.0 released 2026-10-26 (PR #1), CI on `main` green.
+- [ ] 0.3: staying signed in between runs (see Roadmap).
 
 ---
 
@@ -135,9 +137,9 @@ This principle is operationalized in the **Adversarial Review** step of `design_
 - [x] `ConnectionPassword` (SSH password at connect, through `AuthMode.verifier`)
 - [x] `AccountSignInGuide.md`
 
-### 0.2: experience B
-- [ ] `SSHPublicKeyCredential`, `SSHKeyStore` (passes SwiftIdentity's `ConformanceSuite`), `ConnectionKey`
-- [ ] `SignInGate`
+### 0.2: experience B (released as 0.2.0, 2026-10-26)
+- [x] `SSHPublicKeyCredential`, `SSHKeyStore` (passes SwiftIdentity's `ConformanceSuite`), `ConnectionKey`
+- [x] `SignInGate`
 
 ### Future
 - Proposal §14: SSH certificates (blocked upstream), biometric unlock, a SwiftUI presenter,
@@ -145,4 +147,4 @@ This principle is operationalized in the **Adversarial Review** step of `design_
 
 ---
 
-**Last Updated:** 2026-10-25 (0.1.0 released after its first green CI run. Earlier, 0.1 built: every 0.1 roadmap item ticked; release waits on the repository and licence. Created the same day from the sign-in proposal rev 9.)
+**Last Updated:** 2026-10-26 (0.2.0 released: its roadmap items ticked, which the 0.2 PR left open, and its types added to Key Types. Before that: 0.1.0 released 2026-10-25 after its first green CI run.)

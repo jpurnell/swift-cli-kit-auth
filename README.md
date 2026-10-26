@@ -3,12 +3,13 @@
 Account sign-in for [SwiftCLIKit](https://github.com/jpurnell/swift-cli-kit) apps, on
 [SwiftIdentity](https://github.com/jpurnell/swift-identity).
 
-**Status: 0.1.0.** Command-line sign-in (a password, a one-time code, or an OAuth device
-sign-in) and SSH password sign-in. 0.2 adds remembered SSH keys and an SSH sign-in gate.
+**Status: 0.2.0.** Command-line sign-in (a password, a one-time code, or an OAuth device
+sign-in), SSH password sign-in, and SSH apps with accounts: remembered SSH keys and an SSH
+sign-in gate.
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/jpurnell/swift-cli-kit-auth.git", from: "0.1.0"),
+    .package(url: "https://github.com/jpurnell/swift-cli-kit-auth.git", from: "0.2.0"),
 ]
 ```
 
@@ -30,6 +31,11 @@ dependencies: [
   gets a session.
 - `Admission` rules and `AccessLease`, which re-checks a session token, never the credentials,
   so a revoked subject is signed out within one interval.
+
+## What 0.2 adds
+
+- `SSHKeyStore` and `SignInGate`: an SSH key used once alongside another sign-in is remembered,
+  so the next connection goes straight in. Revoking the person stops their keys at once.
 
 See **[AccountSignInGuide.md](AccountSignInGuide.md)**.
 
