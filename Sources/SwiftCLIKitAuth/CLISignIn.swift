@@ -91,7 +91,7 @@ package enum SignInRun {
         _ sources: [any CredentialSource], authenticator: Authenticator, admission: Admission,
         presenter: any SignInPresenter
     ) async throws -> (Authentication, [any Credential]) {
-        let found: (Authentication, [any Credential])
+        let found: Found
         do {
             found = try await firstResolving(sources, authenticator: authenticator, presenter: presenter)
         } catch SignInError.cancelled {
@@ -102,24 +102,79 @@ package enum SignInRun {
             await presenter.show(.failed)
             throw SignInError.failed
         }
-        guard await admission.admits(found.0) else {
+        guard await admission.admits(found.authentication) else {
+            await found.observe(.notAdmitted)
             await presenter.show(.failed)
             throw SignInError.failed
         }
-        return found
+        await found.observe(.admitted)
+        return (found.authentication, found.credentials)
     }
 
-    /// The first source's credentials that resolve, or ``SignInError/failed`` if none do.
+    /// The credentials that resolved, what they proved, and who to tell how they fared.
+    private struct Found {
+        let authentication: Authentication
+        let credentials: [any Credential]
+        let observe: @Sendable (SignInOutcome) async -> Void
+    }
+
+    /// The first source's credentials that resolve, or ``SignInError/failed`` if none do. A
+    /// source whose credentials don't resolve is told so before the next is asked.
     private static func firstResolving(
         _ sources: [any CredentialSource], authenticator: Authenticator, presenter: any SignInPresenter
-    ) async throws -> (Authentication, [any Credential]) {
+    ) async throws -> Found {
         let context = SignInContext(presenter: presenter)
         for source in sources {
-            guard let credentials = try await source.credentials(context) else { continue }
-            if let authentication = await authenticator.authentication(for: credentials) {
-                return (authentication, credentials)
+            guard let gathered = try await gather(source, context) else { continue }
+            if let authentication = await authenticator.authentication(for: gathered.credentials) {
+                return Found(authentication: authentication, credentials: gathered.credentials, observe: gathered.observe)
             }
+            await gathered.observe(.unresolved)
         }
         throw SignInError.failed
     }
+
+    /// A source's credentials, with its observer if it has one.
+    private static func gather(_ source: any CredentialSource, _ context: SignInContext) async throws -> ObservedCredentials? {
+        if let observing = source as? any OutcomeObservingSource {
+            return try await observing.gather(context)
+        }
+        return try await source.credentials(context).map(ObservedCredentials.unobserved)
+    }
+}
+
+/// How a source's credentials fared in a sign-in.
+enum SignInOutcome: Sendable, Equatable {
+    /// They didn't resolve to a subject.
+    case unresolved
+    /// They resolved, but the app doesn't admit the subject.
+    case notAdmitted
+    /// They signed the person in.
+    case admitted
+}
+
+/// Credentials, and who to tell how they fared.
+struct ObservedCredentials: Sendable {
+    /// The credentials to present.
+    let credentials: [any Credential]
+    /// Told the outcome once, by the sign-in loop.
+    let observe: @Sendable (SignInOutcome) async -> Void
+
+    /// Credentials whose outcome nobody needs.
+    static func unobserved(_ credentials: [any Credential]) -> ObservedCredentials {
+        ObservedCredentials(credentials: credentials, observe: { _ in })
+    }
+}
+
+/// A source that learns how its credentials fared, so it can remember or forget them.
+///
+/// Only ``SignInRun`` reports outcomes: nested in ``Together``, or asked by
+/// ``AccessLease/reverify(minimum:maximumAge:)``, such a source presents its credentials and
+/// learns nothing.
+protocol OutcomeObservingSource: CredentialSource {
+    /// The credentials, with the observer for this one sign-in.
+    /// - Parameter context: Where it runs.
+    /// - Returns: The credentials and their observer, or `nil` if the source doesn't apply.
+    /// - Throws: As ``CredentialSource/credentials(_:)`` does.
+    func gather(_ context: SignInContext) async throws -> ObservedCredentials?
 }
