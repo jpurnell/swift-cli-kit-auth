@@ -141,11 +141,15 @@ None new.
 - **Not inside `Together`, not on step-up.** A remembering source nested in `Together`, or asked by
   `AccessLease.reverify`, presents its credentials but saves and clears nothing: the hook is
   called only by the sign-in loop.
-- **A cache readable by others is refused, not treated as empty.** §6 said a cache that can't be
-  read is empty. That holds for a file that can't be opened; but a token file others can read may
-  already be exposed, and quietly replacing it would hide that. So `load` and `save` throw
-  `readableByOthers`, the sign-in fails ("Sign-in failed." to the person, the path to the log),
-  and the person fixes or deletes the file.
+- **A cache that can't be loaded stops the sign-in; §6 was wrong.** §6 said a cache that can't
+  be read is treated as empty. But a token file others can read may already be exposed, and
+  treating it as empty would let the device sign-in quietly replace it, hiding that. Rather than
+  sort errors into "untrusted" and "unreadable" (a distinction a later Keychain cache would have
+  to reproduce), any load error stops the sign-in: "Sign-in failed." to the person, the reason to
+  the log, no later source tried. `FileTokenCache.save` refuses the same file.
+- **The initializer's argument order.** `DeviceSignIn(remembering:credential:_:)` takes the flow
+  last, so it can be a trailing closure; §4 had it in the middle.
+- **Larger than any token.** `FileTokenCache` refuses a file over 64 KiB rather than reading it.
 - **The directory.** Created 0700 if missing. An existing directory others can *write* is refused
   (another user could swap the file between write and rename); one others can merely read is
   allowed, since the file itself is 0600. A symlink at the token path is refused.

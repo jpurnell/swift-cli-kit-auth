@@ -91,6 +91,48 @@ Put an `OAuthIdentityStore` in the `Authenticator`'s stores so the token resolve
 subject. A flow that fails for any reason the person didn't choose (denied, expired, a network
 error) fails the sign-in without saying which.
 
+### Staying signed in between runs
+
+After `mytool login`, later runs can be signed in without asking, as `gh` and the AWS CLI are.
+Only a token from a device sign-in is ever remembered: never a password or a one-time code, which
+prove something only when the person presents them.
+
+```swift
+let cache = FileTokenCache(url: home.appendingPathComponent(".config/mytool/token"))
+
+let sources: [any CredentialSource] = [
+    RememberedToken(cache: cache, credential: OAuthAccessToken.init),
+    DeviceSignIn(remembering: cache, credential: OAuthAccessToken.init) { present in
+        try await client.signIn { authorization in
+            try await present(DevicePrompt(
+                userCode: authorization.userCode,
+                verificationURI: authorization.verificationURI,
+                verificationURIComplete: authorization.verificationURIComplete
+            ))
+        }.accessToken
+    },
+]
+```
+
+- **A remembered token that still resolves signs the person in with no prompt.** One that
+  doesn't (it expired, was revoked at the identity provider, or its subject was revoked here) is
+  forgotten, and the device sign-in runs.
+- **A new token is saved only once its subject is admitted.** Not when it doesn't resolve, nor
+  when your app turns the person away. A save that fails is logged and the sign-in stands.
+- **Your app chooses where the token lives.** `FileTokenCache` has no default path. It writes the
+  file 0600 (a new file renamed into place), creates a missing directory 0700, and refuses a
+  directory others can write and a symlink at the path.
+- **A token file others can read is refused, not repaired.** The sign-in fails, the path goes to
+  the log, and the person deletes the file: the token in it may already be exposed, and quietly
+  replacing it would hide that.
+- **Signing out** is `try await cache.clear()`, plus `await lease.end()` for the current run.
+- **Refresh stays in your app.** An access token lasts about an hour. To stay signed in longer,
+  return a refresh token from the flow and exchange it inside `credential`; this package stores
+  whatever string the flow returns and doesn't model OAuth's tokens.
+- Outcomes reach a source only through the sign-in loop: nested inside `Together`, or asked for a
+  step-up by `AccessLease.reverify`, a remembering source presents its token and saves or clears
+  nothing.
+
 ## Experience C over SSH: the password at connect
 
 `ConnectionPassword` is an `SSHClientVerifier`, so the password is checked during SSH
@@ -169,6 +211,6 @@ tripwire: it is refused, and audited as a honeypot.
 
 ## Not yet
 
-- **Staying signed in between runs.** 0.1 signs in once per process. Keeping a credential on disk
-  is its own security decision; it is designed in 0.2, next to `SSHKeyStore`.
+- **A Keychain-backed `TokenCache`.** `FileTokenCache` is the only one so far; a Keychain cache
+  is a later conformance with no API change.
 - **A QR code** for the device URL.
