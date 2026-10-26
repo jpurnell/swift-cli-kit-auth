@@ -38,6 +38,12 @@ in.
 - ``SignInContext``
 - ``SourceRequirements``
 
+### Staying signed in
+
+- ``RememberedToken``
+- ``TokenCache``
+- ``FileTokenCache``
+
 ### Admitting
 
 - ``Admission``

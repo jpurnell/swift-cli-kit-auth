@@ -4,6 +4,9 @@
 
 import Foundation
 import SwiftIdentity
+#if canImport(os)
+import os
+#endif
 
 /// A username and password, typed or pasted: a SwiftIdentity `Passphrase`.
 ///
@@ -119,21 +122,60 @@ public struct DevicePrompt: Sendable, Equatable {
 /// let device = DeviceSignIn { present in
 ///     BearerKey(try await requestToken(present))   // SwiftOAuthIdentity's OAuthAccessToken, in practice
 /// }
+///
+/// // Or remember the token for later runs, which RememberedToken presents:
+/// let cache = FileTokenCache(url: URL(fileURLWithPath: "/home/ada/.config/mytool/token"))
+/// let remembered = DeviceSignIn(remembering: cache, credential: BearerKey.init) { present in
+///     try await requestToken(present)
+/// }
 /// ```
 ///
 /// A flow that throws for any reason the person didn't choose (denied, expired, a network
 /// failure) fails the sign-in as ``SignInError/failed``, saying nothing more; one that throws
 /// ``SignInError`` keeps it.
-public struct DeviceSignIn: CredentialSource {
+public struct DeviceSignIn: CredentialSource, OutcomeObservingSource {
     /// Runs a device sign-in: shows `present`'s prompt once, then returns the credential.
     public typealias Flow = @Sendable (_ present: @escaping @Sendable (DevicePrompt) async throws -> Void) async throws -> any Credential
 
-    private let flow: Flow
+    /// Runs a device sign-in: shows `present`'s prompt once, then returns the token string, which
+    /// is what gets remembered.
+    public typealias TokenFlow = @Sendable (_ present: @escaping @Sendable (DevicePrompt) async throws -> Void) async throws -> String
+
+    #if canImport(os)
+    private static let logger = Logger(subsystem: "com.swiftclikitauth", category: "DeviceSignIn")
+    #endif
+
+    private enum Kind: Sendable {
+        case plain(Flow)
+        case remembering(any TokenCache, TokenFlow, @Sendable (String) -> any Credential)
+    }
+
+    private let kind: Kind
 
     /// Creates the source.
     /// - Parameter flow: The app's device flow.
     public init(_ flow: @escaping Flow) {
-        self.flow = flow
+        self.kind = .plain(flow)
+    }
+
+    /// Creates the source, remembering the token once the sign-in it makes is admitted.
+    ///
+    /// The token is saved only when its subject is admitted: not when it doesn't resolve, nor
+    /// when the app turns them away, nor when the source is asked for a step-up. A save that
+    /// fails is logged and the sign-in stands; the next run asks again.
+    ///
+    /// To keep a sign-in going past an access token's hour, return a refresh token from `flow`
+    /// and exchange it in `credential`: refresh stays in the app, which owns the OAuth client.
+    /// - Parameters:
+    ///   - cache: Where the token is remembered, such as a ``FileTokenCache``.
+    ///   - credential: Makes the credential SwiftIdentity resolves from the token.
+    ///   - flow: The app's device flow, returning the token string.
+    public init(
+        remembering cache: any TokenCache,
+        credential: @escaping @Sendable (String) -> any Credential,
+        _ flow: @escaping TokenFlow
+    ) {
+        self.kind = .remembering(cache, flow, credential)
     }
 
     /// It shows a URL and reaches a server.
@@ -145,21 +187,134 @@ public struct DeviceSignIn: CredentialSource {
     /// - Throws: ``SignInError/cancelled`` or ``SignInError/inputEnded`` as the flow threw them;
     ///   ``SignInError/failed`` for anything else.
     public func credentials(_ context: SignInContext) async throws -> [any Credential]? {
+        try await gather(context)?.credentials
+    }
+
+    /// Runs the flow, and remembers its token if the sign-in is admitted.
+    func gather(_ context: SignInContext) async throws -> ObservedCredentials? {
         let presenter = context.presenter
+        let present: @Sendable (DevicePrompt) async throws -> Void = { prompt in
+            await presenter.show(.visit(
+                userCode: prompt.userCode,
+                verificationURI: prompt.verificationURI,
+                verificationURIComplete: prompt.verificationURIComplete
+            ))
+            await presenter.progress("Waiting for approval…")
+        }
         do {
-            let credential = try await flow { prompt in
-                await presenter.show(.visit(
-                    userCode: prompt.userCode,
-                    verificationURI: prompt.verificationURI,
-                    verificationURIComplete: prompt.verificationURIComplete
-                ))
-                await presenter.progress("Waiting for approval…")
+            switch kind {
+            case .plain(let flow):
+                return .unobserved([try await flow(present)])
+            case .remembering(let cache, let flow, let credential):
+                let token = try await flow(present)
+                return ObservedCredentials(credentials: [credential(token)]) { outcome in
+                    guard outcome == .admitted else { return }
+                    await Self.save(token, in: cache)
+                }
             }
-            return [credential]
         } catch let error as SignInError {
             throw error
         } catch {
             throw SignInError.failed
+        }
+    }
+
+    /// Saves an admitted token; a failure leaves the sign-in standing.
+    private static func save(_ token: String, in cache: any TokenCache) async {
+        do {
+            try await cache.save(token)
+        } catch {
+            // The person is signed in; only remembering failed, so the next run asks again.
+            #if canImport(os)
+            logger.error("couldn't remember the sign-in: \(String(describing: error), privacy: .private)")
+            #endif
+        }
+    }
+}
+
+/// A token remembered from an earlier sign-in, presented again.
+///
+/// Put it first, before the ``DeviceSignIn`` that remembers into the same cache: a token that
+/// still resolves signs the person in with no prompt; one that doesn't (it expired, was revoked
+/// at the identity provider, or its subject was revoked here) is forgotten, and the device
+/// sign-in runs.
+///
+/// ```swift
+/// import Foundation
+/// import SwiftCLIKitAuth
+/// import SwiftIdentity
+///
+/// func sources(_ flow: @escaping DeviceSignIn.TokenFlow) -> [any CredentialSource] {
+///     let cache = FileTokenCache(url: URL(fileURLWithPath: "/home/ada/.config/mytool/token"))
+///     return [
+///         RememberedToken(cache: cache, credential: BearerKey.init),
+///         DeviceSignIn(remembering: cache, credential: BearerKey.init, flow),
+///     ]
+/// }
+/// ```
+///
+/// Signing out is the app's call: `try await cache.clear()`.
+///
+/// A cache that can't be loaded, such as a token file others can read, stops the sign-in: the
+/// person sees "Sign-in failed.", the reason goes to the log, and nothing later is tried, since
+/// replacing a token that may be exposed would hide that it is.
+public struct RememberedToken: CredentialSource, OutcomeObservingSource {
+    #if canImport(os)
+    private static let logger = Logger(subsystem: "com.swiftclikitauth", category: "RememberedToken")
+    #endif
+
+    private let cache: any TokenCache
+    private let credential: @Sendable (String) -> any Credential
+
+    /// Creates the source.
+    /// - Parameters:
+    ///   - cache: Where the token was remembered.
+    ///   - credential: Makes the credential SwiftIdentity resolves from the token: the same one
+    ///     the remembering ``DeviceSignIn`` uses.
+    public init(cache: any TokenCache, credential: @escaping @Sendable (String) -> any Credential) {
+        self.cache = cache
+        self.credential = credential
+    }
+
+    /// It asks nothing of the person.
+    public var requirements: SourceRequirements { [] }
+
+    /// The remembered token, as a credential.
+    /// - Parameter context: Unused: the token comes from the cache.
+    /// - Returns: One credential, or `nil` when nothing is remembered.
+    /// - Throws: ``SignInError/failed`` when the cache can't be loaded.
+    public func credentials(_ context: SignInContext) async throws -> [any Credential]? {
+        try await gather(context)?.credentials
+    }
+
+    /// The remembered token, forgotten unless it signs the person in.
+    func gather(_ context: SignInContext) async throws -> ObservedCredentials? {
+        let token: String?
+        do {
+            token = try await cache.load()
+        } catch {
+            #if canImport(os)
+            Self.logger.error("the remembered sign-in couldn't be loaded: \(String(describing: error), privacy: .private)")
+            #endif
+            throw SignInError.failed
+        }
+        guard let token else { return nil }
+        let cache = self.cache
+        return ObservedCredentials(credentials: [credential(token)]) { outcome in
+            guard outcome != .admitted else { return }
+            await Self.forget(cache)
+        }
+    }
+
+    /// Forgets a token that no longer signs the person in.
+    private static func forget(_ cache: any TokenCache) async {
+        do {
+            try await cache.clear()
+        } catch {
+            // The token is refused either way; it is only left on disk.
+            #if canImport(os)
+            logger.error("couldn't forget a remembered sign-in: \(String(describing: error), privacy: .private)")
+            #endif
         }
     }
 }

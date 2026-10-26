@@ -44,7 +44,8 @@ plan tracks delivery.
 ### Module Structure
 
 ```
-Sources/SwiftCLIKitAuth/      presenting, credential sources, admission, the lease, CLI sign-in
+Sources/SwiftCLIKitAuth/      presenting, credential sources, admission, the lease, CLI sign-in;
+                              remembered tokens (0.3)
 Sources/SwiftCLIKitAuthSSH/   ConnectionPassword (0.1); SignInGate, SSHKeyStore (0.2)
 ```
 
@@ -57,6 +58,8 @@ Sources/SwiftCLIKitAuthSSH/   ConnectionPassword (0.1); SignInGate, SSHKeyStore 
 | `Admission` | Who the app admits: subjects, attributes, minimum assurance, factor algorithms, custom |
 | `AccessLease` | An admitted session's lifetime: re-resolves a `SessionStore` token on an interval; step-up via `reverify` |
 | `CLISignIn` | Experience A: run sources, authenticate, admit, and return a lease |
+| `TokenCache` / `FileTokenCache` | Where a remembered device token lives between runs; owner-only file, refused if exposed |
+| `RememberedToken` | Presents the remembered token; forgets it when it no longer signs the person in |
 | `SSHKeyStore` / `ConnectionKey` / `SignInGate` | Experience B: remembered SSH keys, and the gate that signs each SSH connection in |
 | `ConnectionPassword` | An `SSHClientVerifier`: the SSH password, resolved through the `Authenticator` and admitted, attached as the session's `Authentication` |
 
@@ -141,10 +144,18 @@ This principle is operationalized in the **Adversarial Review** step of `design_
 - [x] `SSHPublicKeyCredential`, `SSHKeyStore` (passes SwiftIdentity's `ConformanceSuite`), `ConnectionKey`
 - [x] `SignInGate`
 
+### 0.3: staying signed in between runs
+0.1 deferred this to "0.2, next to `SSHKeyStore`"; it got its own proposal instead
+(`2026-10-26_RememberedSignIn.md`, approved 2026-10-26: tokens only, refresh in the app, the app
+places the file).
+- [x] `TokenCache`, `FileTokenCache`
+- [x] `RememberedToken`, `DeviceSignIn(remembering:credential:_:)`
+
 ### Future
 - Proposal §14: SSH certificates (blocked upstream), biometric unlock, a SwiftUI presenter,
-  authorization-code + loopback for desktop CLIs, Keychain-backed stores.
+  authorization-code + loopback for desktop CLIs, Keychain-backed stores (including a Keychain
+  `TokenCache`).
 
 ---
 
-**Last Updated:** 2026-10-26 (0.2.0 released: its roadmap items ticked, which the 0.2 PR left open, and its types added to Key Types. Before that: 0.1.0 released 2026-10-25 after its first green CI run.)
+**Last Updated:** 2026-10-26 (0.3, remembered command-line sign-in, built from its approved proposal; key types, module structure and roadmap updated. Earlier the same day: 0.2.0 released, its roadmap items ticked, which the 0.2 PR left open. 0.1.0 released 2026-10-25 after its first green CI run.)

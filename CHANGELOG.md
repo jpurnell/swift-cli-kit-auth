@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Staying signed in between command-line runs (design:
+  `project/plans/proposals/2026-10-26_RememberedSignIn.md`).
+  - `TokenCache`, and `FileTokenCache`: a token in an owner-only file the app places. Written 0600
+    and renamed into place; a missing directory is created 0700. A file others can read, a
+    symlink, a directory others can write, and a file larger than any token are refused.
+  - `RememberedToken`: presents the remembered token, and forgets it when it no longer signs the
+    person in. A cache that can't be loaded stops the sign-in.
+  - `DeviceSignIn(remembering:credential:_:)`: saves the flow's token once its subject is
+    admitted, and never otherwise. Only device sign-in tokens are remembered; refresh stays in the
+    app's `credential` closure.
+
 ## [0.2.0] - 2026-10-26
 
 ### Added

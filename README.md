@@ -5,7 +5,8 @@ Account sign-in for [SwiftCLIKit](https://github.com/jpurnell/swift-cli-kit) app
 
 **Status: 0.2.0.** Command-line sign-in (a password, a one-time code, or an OAuth device
 sign-in), SSH password sign-in, and SSH apps with accounts: remembered SSH keys and an SSH
-sign-in gate.
+sign-in gate. Unreleased: staying signed in
+between command-line runs (0.3).
 
 ```swift
 dependencies: [
@@ -36,6 +37,11 @@ dependencies: [
 
 - `SSHKeyStore` and `SignInGate`: an SSH key used once alongside another sign-in is remembered,
   so the next connection goes straight in. Revoking the person stops their keys at once.
+
+## Since 0.2 (unreleased)
+
+- `RememberedToken`, `DeviceSignIn(remembering:)` and `FileTokenCache`: after `mytool login`, later
+  runs are signed in until the token stops resolving. Only device sign-in tokens are remembered.
 
 See **[AccountSignInGuide.md](AccountSignInGuide.md)**.
 
