@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-25
+
+First release: command-line sign-in (experience A) and passwords done to standard, at the
+terminal or at SSH connect (experience C). Remembered SSH keys and the SSH sign-in gate are 0.2.
+
 ### Added
 
 - `TerminalPresenter.readSecret` drops a paste's one trailing line break (`\n`, `\r\n` or

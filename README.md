@@ -3,9 +3,14 @@
 Account sign-in for [SwiftCLIKit](https://github.com/jpurnell/swift-cli-kit) apps, on
 [SwiftIdentity](https://github.com/jpurnell/swift-identity).
 
-**Status: in development, not yet released.** 0.1 will cover command-line sign-in (a password,
-a one-time code, or an OAuth device sign-in) and SSH password sign-in. 0.2 adds remembered SSH
-keys.
+**Status: 0.1.0.** Command-line sign-in (a password, a one-time code, or an OAuth device
+sign-in) and SSH password sign-in. 0.2 adds remembered SSH keys and an SSH sign-in gate.
+
+```swift
+dependencies: [
+    .package(url: "https://github.com/jpurnell/swift-cli-kit-auth.git", from: "0.1.0"),
+]
+```
 
 ## What it does
 
@@ -16,7 +21,7 @@ keys.
 - **It depends on swift-cli-kit and swift-identity only.** A sign-in method's own package, such
   as swift-oauth for device sign-in, is your app's dependency, never this one's.
 
-## In 0.1
+## What 0.1 includes
 
 - `CLISignIn.signIn` with `PromptedPassword`, `PromptedCode`, `DeviceSignIn` (your app runs the
   OAuth flow) and `Together` for two factors; `TerminalPresenter` draws over any SwiftCLIKit
