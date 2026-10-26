@@ -19,6 +19,8 @@ let package = Package(
         .package(url: "https://github.com/jpurnell/swift-identity.git", from: "0.7.1"),
         // Apple's, and already resolved through swift-cli-kit, so it adds nothing to download.
         .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.4.3"),
+        // Apple's, and already resolved through swift-identity: SHA-256 for SSH key fingerprints.
+        .package(url: "https://github.com/apple/swift-crypto.git", from: "3.0.0"),
         // Already resolved through swift-cli-kit (swift-nio-ssh is its dependency, swift-nio is
         // swift-nio-ssh's), so they add nothing to download. Named only so the SSH tests can
         // drive a real NIOSSH client; no library target links them.
@@ -39,6 +41,7 @@ let package = Package(
                 "SwiftCLIKitAuth",
                 .product(name: "SwiftCLIKitSSH", package: "swift-cli-kit"),
                 .product(name: "SwiftIdentity", package: "swift-identity"),
+                .product(name: "Crypto", package: "swift-crypto"),
             ]
         ),
         .testTarget(
@@ -55,11 +58,13 @@ let package = Package(
                 "SwiftCLIKitAuthSSH",
                 .product(name: "SwiftCLIKitSSH", package: "swift-cli-kit"),
                 .product(name: "SwiftIdentity", package: "swift-identity"),
+                .product(name: "SwiftIdentityConformance", package: "swift-identity"),
                 .product(name: "NIOConcurrencyHelpers", package: "swift-nio"),
                 .product(name: "NIOCore", package: "swift-nio"),
                 .product(name: "NIOPosix", package: "swift-nio"),
                 .product(name: "NIOSSH", package: "swift-nio-ssh"),
-            ]
+            ],
+            resources: [.copy("Fixtures")]
         ),
     ]
 )

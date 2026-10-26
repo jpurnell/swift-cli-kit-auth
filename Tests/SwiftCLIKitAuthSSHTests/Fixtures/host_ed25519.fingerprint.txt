@@ -1,0 +1,1 @@
+256 SHA256:s5134XJz0otuDAWoUr+u36ZhQMCCIV+NjVxaXVrTzbY swiftclikit-test-fixture (ED25519)
