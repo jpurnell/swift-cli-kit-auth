@@ -1,0 +1,21 @@
+name: Quality Gate
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 6 * * *'
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  quality-gate:
+    uses: jpurnell/quality-gate-swift/.github/workflows/quality-gate-reusable.yml@main
+    with:
+      checks: "all"
+      continue-on-failure: true
+      corpus-repo: jpurnell/org-judgement-corpus
+    secrets:
+      corpus-deploy-key: ${{ secrets.CORPUS_DEPLOY_KEY }}
