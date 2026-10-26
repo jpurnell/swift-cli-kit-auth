@@ -15,4 +15,4 @@ building are its §17.
       cleared; a cache that can't be loaded stops the sign-in (§17).
 - [x] `DeviceSignIn(remembering:)`: an admitted token is saved; a token not admitted is not; a
       token that doesn't resolve is not; a save that fails leaves the sign-in standing.
-- [ ] Docs: guide section, README, CHANGELOG, master plan; gate 0/0, CI green.
+- [x] Docs: guide section, README, CHANGELOG, master plan; gate 0/0, CI green (released as 0.3.0, 2026-10-26).

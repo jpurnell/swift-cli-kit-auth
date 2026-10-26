@@ -98,7 +98,7 @@ SignInPresenter ◀────────────────────�
 ### What's Next
 - [x] 0.1.0 released 2026-10-25: public repository `jpurnell/swift-cli-kit-auth`, proprietary licence (the user's decisions), CI green.
 - [x] 0.2.0 released 2026-10-26 (PR #1), CI on `main` green.
-- [ ] 0.3: staying signed in between runs (see Roadmap).
+- [x] 0.3.0 released 2026-10-26 (PR #2), CI on `main` green.
 
 ---
 
@@ -144,7 +144,7 @@ This principle is operationalized in the **Adversarial Review** step of `design_
 - [x] `SSHPublicKeyCredential`, `SSHKeyStore` (passes SwiftIdentity's `ConformanceSuite`), `ConnectionKey`
 - [x] `SignInGate`
 
-### 0.3: staying signed in between runs
+### 0.3: staying signed in between runs (released as 0.3.0, 2026-10-26)
 0.1 deferred this to "0.2, next to `SSHKeyStore`"; it got its own proposal instead
 (`2026-10-26_RememberedSignIn.md`, approved 2026-10-26: tokens only, refresh in the app, the app
 places the file).
@@ -158,4 +158,4 @@ places the file).
 
 ---
 
-**Last Updated:** 2026-10-26 (0.3, remembered command-line sign-in, built from its approved proposal; key types, module structure and roadmap updated. Earlier the same day: 0.2.0 released, its roadmap items ticked, which the 0.2 PR left open. 0.1.0 released 2026-10-25 after its first green CI run.)
+**Last Updated:** 2026-10-26 (0.3.0 released after the merge's CI passed. Earlier the same day: 0.3 built from its approved proposal; 0.2.0 released, its roadmap items ticked, which the 0.2 PR left open. 0.1.0 released 2026-10-25.)
