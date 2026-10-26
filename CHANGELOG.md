@@ -20,3 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the subject once.
 - `Admission`: `anyone`, `subjects`, `attribute(_:equals:)`, `minimumAssurance`, `factors` (a
   factor with no recorded algorithm fails), `custom`, and `all` (an empty list admits no one).
+- `ConnectionPassword`, an `SSHClientVerifier`: an SSH password becomes a SwiftIdentity
+  `Passphrase` for the username, resolved through `Authenticator.authentication(for:)` and then
+  the app's `admits` rule. A wrong password, an unknown user or an unadmitted subject gets no
+  session; an admitted one's sessions carry the `Authentication`.

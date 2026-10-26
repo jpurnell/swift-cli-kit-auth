@@ -10,11 +10,6 @@
 # matches nothing and excludes nothing.
 docTarget: SwiftCLIKitAuth
 
-# disk-clean is not an audit: it deletes build products (now `quality-gate clean`), so
-# leaving it out of `all` hides no finding.
-excludedCheckers:
-  - disk-clean
-
 enabledCheckers:
   - all
   - logging

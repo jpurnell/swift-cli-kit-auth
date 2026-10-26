@@ -38,7 +38,8 @@ plan tracks delivery.
 - **Testing:** Swift Testing framework
 - **Concurrency:** Swift 6 strict concurrency throughout
 - **Dependencies:** `swift-cli-kit` ≥ 2.3.0 (`SwiftCLIKit`, `SwiftCLIKitSSH`), `swift-identity`
-  ≥ 0.7.1. Nothing else, by design.
+  ≥ 0.7.1. No other library dependency, by design. The SSH tests also name swift-nio and
+  swift-nio-ssh, already resolved through swift-cli-kit, to drive a real NIOSSH client.
 
 ### Module Structure
 
