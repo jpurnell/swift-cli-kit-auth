@@ -28,3 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   included: secrets through `SecureField` (masked, pasted whole, F2 to reveal, masked again on
   Enter), Ctrl-C and Escape cancel, end of input ends, CRLF line endings, no alternate screen,
   and control, format and separator characters in anything shown replaced with U+FFFD.
+- `AccessLease`, `LeaseEnd` and `StepUp`: an admitted session's lifetime. The lease mints a
+  `SessionStore` token and re-resolves it every `reresolveEvery`, so revoking the subject ends it
+  within one interval; it never keeps the sign-in credentials. `reverify(minimum:maximumAge:)`
+  steps up for the same subject only.
