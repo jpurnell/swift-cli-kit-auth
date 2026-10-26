@@ -35,4 +35,4 @@ See **[AccountSignInGuide.md](AccountSignInGuide.md)**.
 
 ## License
 
-Not yet chosen.
+Proprietary. Copyright (c) 2026 Justin Purnell. All rights reserved. See [LICENSE](LICENSE).

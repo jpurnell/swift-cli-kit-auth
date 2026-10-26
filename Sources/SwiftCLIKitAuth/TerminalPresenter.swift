@@ -122,7 +122,9 @@ public struct TerminalPresenter: SignInPresenter {
     /// the reveal key is toggled on.
     ///
     /// The field is redrawn on its own line after every key. When the person presses Enter it
-    /// is drawn masked once more, so a revealed secret doesn't stay in scrollback.
+    /// is drawn masked once more, so a revealed secret doesn't stay in scrollback. A paste's one
+    /// trailing line break is dropped: a copied line usually ends in one, and Enter can never
+    /// type one into a secret, so it is the copy's, not the password's.
     /// - Parameter label: What is being asked for.
     /// - Returns: The secret, which the caller hands on and does not keep.
     /// - Throws: ``SignInError/cancelled`` on Ctrl-C or Escape; ``SignInError/inputEnded`` if
@@ -136,7 +138,7 @@ public struct TerminalPresenter: SignInPresenter {
             if key == .ctrlC {
                 try cancel(&field, prefix: prefix)
             }
-            switch field.handleKey(key) {
+            switch field.handleKey(Self.withoutCopiedLineBreak(key)) {
             case .submitted:
                 field.setRevealed(false)
                 drawSecret(field, prefix: prefix)
@@ -152,6 +154,15 @@ public struct TerminalPresenter: SignInPresenter {
         }
         field.clear()
         throw SignInError.inputEnded
+    }
+
+    /// A paste without its one trailing line break. A copied line usually ends in one, and Enter
+    /// can never type one into a secret, so it belongs to the copy, not the password. One only,
+    /// and only at the end: `"\r\n"` is a single `Character`, so dropping the last character
+    /// takes it whole.
+    private static func withoutCopiedLineBreak(_ key: Key) -> Key {
+        guard case .paste(let text) = key, let last = text.last, last.isNewline else { return key }
+        return .paste(String(text.dropLast()))
     }
 
     /// Says what is happening, on a line of its own.

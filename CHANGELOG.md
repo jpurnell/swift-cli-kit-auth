@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `TerminalPresenter.readSecret` drops a paste's one trailing line break (`\n`, `\r\n` or
+  `\r`): a copied line usually ends in one, and Enter can never type one into a secret. Line
+  breaks inside a paste, and anything typed, are kept.
+- Licence: proprietary (`LICENSE`).
 - `CLISignIn.signIn`: runs sources in order. One that doesn't apply, or whose credentials don't
   resolve, passes to the next; one that throws stops the sign-in; a resolved subject the app
   doesn't admit fails at once. Every failure shows "Sign-in failed" and nothing more. The lease

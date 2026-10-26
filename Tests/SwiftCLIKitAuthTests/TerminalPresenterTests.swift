@@ -144,6 +144,29 @@ struct TerminalPresenterTests {
         #expect(!output(backend).contains("日本語"))
     }
 
+    /// A copied line usually ends in a line break, and Enter can never type one into a secret, so
+    /// a paste's single trailing line break is the copy's, not the password's.
+    @Test("A paste's one trailing line break is dropped, whichever kind", arguments: ["\n", "\r\n", "\r"])
+    func secretPasteTrailingBreak(_ lineBreak: String) async throws {
+        let backend = makeBackend()
+        let presenter = TerminalPresenter(backend: backend)
+        await backend.inject(.key(.paste("copied-from-a-manager" + lineBreak)))
+        await backend.inject(.key(.enter))
+
+        #expect(try await presenter.readSecret("Password") == "copied-from-a-manager")
+    }
+
+    @Test("Only one trailing line break goes; line breaks inside a paste, or typed text, stay")
+    func secretPasteKeepsTheRest() async throws {
+        let backend = makeBackend()
+        let presenter = TerminalPresenter(backend: backend)
+        await type("ab", into: backend)
+        await backend.inject(.key(.paste("c\nd\n\n")))
+        await backend.inject(.key(.enter))
+
+        #expect(try await presenter.readSecret("Password") == "abc\nd\n")
+    }
+
     @Test("The reveal key shows the secret, and Enter masks it again")
     func secretReveal() async throws {
         let backend = makeBackend()
