@@ -65,7 +65,8 @@ extension SSHSession { var authentication: Authentication? }
       for the same subject; a different subject fails.
 - [ ] `CLISignIn`: first source that applies wins; **a source that throws never falls through**;
       refusal shows "Sign-in failed" with the reason in audit only; admission false fails.
-- [ ] `ConnectionPassword`: wrong password never gets a session; admitted session carries the
-      `Authentication`; over the wire.
+- [x] `ConnectionPassword`: wrong password never gets a session; admitted session carries the
+      `Authentication`; over the wire. (Takes `admits:` as a closure for now; the `Admission`
+      convenience init lands when `Admission` does.)
 - [ ] SwiftIdentity `ConformanceSuite` stores used as fixtures (real `FileCredentialStore`).
 - [ ] Docs: DocC, `AccountSignInGuide.md`, README, CHANGELOG; gate 0/0 locally and in CI.

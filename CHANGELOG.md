@@ -13,3 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   swift-identity 0.7.1.
 - `SignInPresenter`, `SignInPrompt` and `SignInError`; `CredentialSource`, `SignInContext` and
   `SourceRequirements`; `SSHSession.authentication`.
+- `ConnectionPassword`, an `SSHClientVerifier`: an SSH password becomes a SwiftIdentity
+  `Passphrase` for the username, resolved through `Authenticator.authentication(for:)` and then
+  the app's `admits` rule. A wrong password, an unknown user or an unadmitted subject gets no
+  session; an admitted one's sessions carry the `Authentication`.
