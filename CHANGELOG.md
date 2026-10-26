@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `SSHPublicKeyCredential`: an SSH public key the client proved it holds, from a connection's
+  `SSHClientIdentity` (a plain key only, never a certificate) or an OpenSSH line. Its
+  `fingerprint` is the one `ssh-keygen -l -E sha256` prints, checked against OpenSSH's own output
+  for Ed25519 and ECDSA keys.
+- `SSHKeyStore`: remembered keys, a `CredentialStore` that **passes SwiftIdentity's
+  `ConformanceSuite` unchanged**, claiming revocation, honeypot, expiry and algorithm records.
+  - Each subject's status is read from the roster on every resolution, so revoking a subject
+    stops their keys at once, and a key bound to a honeypot subject is a tripwire.
+  - It reports the key type it recorded when the key was bound, never the connection's claim.
+  - The file is owner-only; a shared file or a malformed line stops it at startup. Writes are
+    atomic and never readable by others, even mid-write.
+- `ConnectionKey`: the connection's key as a credential source.
+- `SignInGate.wrap`, experience B.
+  - A password verified at connect is the sign-in.
+  - Otherwise the sources run in order, so an unremembered key falls through to a device sign-in.
+  - A key used with another credential is then remembered for `rememberFor`.
+  - The app runs with a lease, and is cancelled when the lease ends.
+
 ## [0.1.0] - 2026-10-25
 
 First release: command-line sign-in (experience A) and passwords done to standard, at the

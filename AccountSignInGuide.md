@@ -1,8 +1,9 @@
 # Account Sign-In Guide
 
 swift-cli-kit-auth signs people in to SwiftCLIKit apps, from a local terminal or over SSH, on
-[SwiftIdentity](https://github.com/jpurnell/swift-identity). This guide covers 0.1: command-line
-sign-in (experience A) and passwords done to standard (experience C).
+[SwiftIdentity](https://github.com/jpurnell/swift-identity). It covers command-line
+sign-in (experience A), SSH apps with accounts and remembered keys (experience B, from 0.2), and
+passwords done to standard (experience C).
 
 ## What lives where
 
@@ -118,6 +119,40 @@ try await server.start { backend, session in
 decrypted by a future quantum computer. See SwiftCLIKit's README; if that matters, put the app
 behind OpenSSH or TLS.
 
+## Experience B: SSH apps with accounts
+
+`ssh dash.example.com` asks the person to visit a URL and enter a code. After approval their
+key is remembered, and the next connection goes straight in.
+
+```swift
+let keys = try SSHKeyStore(url: keysURL, subjects: { id in people.subject(id: id) })
+let gate = SignInGate(
+    sources: [ConnectionKey(), device],              // device: a DeviceSignIn, as above
+    authenticator: Authenticator(stores: [keys, corp, people], audit: audit, now: { Date() }),
+    admission: .attribute("team", equals: "ops"),
+    keys: keys,
+    rememberFor: .seconds(30 * 24 * 3600),           // no default: your security decision
+    sessions: sessions, sessionLifetime: 8 * 3600, reresolveEvery: .seconds(300),
+    generator: { SystemRandomNumberGenerator() }
+)
+try await SSHServer(host: "0.0.0.0", hostKeySource: .filePath(hostKeyPath),
+                    configuration: SSHConfiguration(authMode: .publicKey))
+    .start(sessionHandler: gate.wrap { backend, session, lease in
+        try await DashboardApp(lease: lease).run(on: backend)
+    })
+```
+
+1. **`ConnectionKey` offers the key.** If `keys` remembers it, the app runs with no prompt.
+2. **Otherwise the device sign-in runs.** The token resolves to the same local subject through
+   SwiftIdentity's external-identity mapping.
+3. **The key is bound** to that subject until `rememberFor` runs out.
+4. **The app runs with a lease.** When the lease ends (revoked, or expired), the app is
+   cancelled.
+
+`SSHKeyStore` passes SwiftIdentity's `ConformanceSuite`. It reads each subject's status on every
+resolution, so revoking someone stops their keys at once. A key bound to a honeypot subject is a
+tripwire: it is refused, and audited as a honeypot.
+
 ## The lease
 
 `AccessLease` is what an admitted session holds:
@@ -132,9 +167,8 @@ behind OpenSSH or TLS.
 - Revocation **at an identity provider** is seen at the next sign-in, not mid-session: the lease
   asks your local roster, not the IdP, so the IdP isn't called every few minutes.
 
-## Not in 0.1
+## Not yet
 
 - **Staying signed in between runs.** 0.1 signs in once per process. Keeping a credential on disk
   is its own security decision; it is designed in 0.2, next to `SSHKeyStore`.
-- **Remembered SSH keys and the SSH sign-in gate** (experience B): 0.2.
 - **A QR code** for the device URL.

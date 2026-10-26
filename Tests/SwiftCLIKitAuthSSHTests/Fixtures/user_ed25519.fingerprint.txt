@@ -1,0 +1,1 @@
+256 SHA256:swCesmlQ6+VkD0+7QcmeVIim6ekRp8Jy/zNZoSZdwvM fixture-user (ED25519)
