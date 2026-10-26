@@ -53,13 +53,13 @@ extension SSHSession { var authentication: Authentication? }
 ```
 
 ## Phases
-- [ ] Core types: `SignInError`, `SignInPrompt`, `SignInPresenter`, `SignInContext`,
+- [x] Core types: `SignInError`, `SignInPrompt`, `SignInPresenter`, `SignInContext`,
       `SourceRequirements`, `CredentialSource`.
 - [ ] `TerminalPresenter` over `TestBackend`: masked secret, paste whole, reveal key, Ctrl-C and
       Escape cancel, end of input, control characters in shown text neutralised, no secret in
       output.
-- [ ] Sources: `PromptedPassword`, `PromptedCode`, `DeviceSignIn`, `Together` (subject threaded).
-- [ ] `Admission`, each rule and `all`.
+- [x] Sources: `PromptedPassword`, `PromptedCode`, `DeviceSignIn`, `Together` (subject threaded).
+- [x] `Admission`, each rule and `all`.
 - [ ] `AccessLease`: revocation ends it within `reresolveEvery` (injected clock); expiry; `end()`
       revokes the token; `reverify` within `maximumAge` doesn't prompt; step-up to multi-factor
       for the same subject; a different subject fails.

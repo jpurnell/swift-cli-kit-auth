@@ -13,3 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   swift-identity 0.7.1.
 - `SignInPresenter`, `SignInPrompt` and `SignInError`; `CredentialSource`, `SignInContext` and
   `SourceRequirements`; `SSHSession.authentication`.
+- Credential sources: `PromptedPassword` (passed on untrimmed; SwiftIdentity canonicalises),
+  `PromptedCode` (spaces removed), `DeviceSignIn` (the app's closure runs the flow, so this
+  package never depends on an OAuth library; any failure the person didn't choose is `.failed`),
+  and `Together`, which presents several sources' credentials as one authentication and names
+  the subject once.
+- `Admission`: `anyone`, `subjects`, `attribute(_:equals:)`, `minimumAssurance`, `factors` (a
+  factor with no recorded algorithm fails), `custom`, and `all` (an empty list admits no one).

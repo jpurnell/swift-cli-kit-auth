@@ -25,5 +25,14 @@ in.
 ### Gathering credentials
 
 - ``CredentialSource``
+- ``PromptedPassword``
+- ``PromptedCode``
+- ``DeviceSignIn``
+- ``DevicePrompt``
+- ``Together``
 - ``SignInContext``
 - ``SourceRequirements``
+
+### Admitting
+
+- ``Admission``
