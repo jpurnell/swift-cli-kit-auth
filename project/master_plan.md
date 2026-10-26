@@ -92,7 +92,7 @@ SignInPresenter ◀────────────────────�
       key input); SwiftIdentity 0.7.1; swift-oauth 1.0.0-beta.9 (device grant, `SwiftOAuthIdentity`).
 
 ### What's Next
-- [ ] 0.1 — see `project/checklists/CURRENT_Release01.md`.
+- [ ] Release 0.1: needs the GitHub repository and a licence (the user's decisions); built and gated locally.
 
 ---
 
@@ -128,11 +128,11 @@ This principle is operationalized in the **Adversarial Review** step of `design_
 
 ## Roadmap
 
-### 0.1: experiences A and C
-- [ ] `TerminalPresenter`, `PromptedPassword`, `PromptedCode`, `DeviceSignIn`, `Together`
-- [ ] `Admission`, `AccessLease`, `CLISignIn`
-- [ ] `ConnectionPassword` (SSH password at connect, through `AuthMode.verifier`)
-- [ ] `AccountSignInGuide.md`
+### 0.1: experiences A and C (built 2026-10-25, unreleased)
+- [x] `TerminalPresenter`, `PromptedPassword`, `PromptedCode`, `DeviceSignIn`, `Together`
+- [x] `Admission`, `AccessLease`, `CLISignIn`
+- [x] `ConnectionPassword` (SSH password at connect, through `AuthMode.verifier`)
+- [x] `AccountSignInGuide.md`
 
 ### 0.2: experience B
 - [ ] `SSHPublicKeyCredential`, `SSHKeyStore` (passes SwiftIdentity's `ConformanceSuite`), `ConnectionKey`
@@ -144,4 +144,4 @@ This principle is operationalized in the **Adversarial Review** step of `design_
 
 ---
 
-**Last Updated:** 2026-10-25 (created: mission, architecture and roadmap from the sign-in proposal rev 9)
+**Last Updated:** 2026-10-25 (0.1 built: every 0.1 roadmap item ticked; release waits on the repository and licence. Created the same day from the sign-in proposal rev 9.)

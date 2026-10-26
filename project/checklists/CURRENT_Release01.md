@@ -68,5 +68,5 @@ extension SSHSession { var authentication: Authentication? }
 - [x] `ConnectionPassword`: wrong password never gets a session; admitted session carries the
       `Authentication`; over the wire. (Takes `admits:` as a closure for now; the `Admission`
       convenience init lands when `Admission` does.)
-- [ ] SwiftIdentity `ConformanceSuite` stores used as fixtures (real `FileCredentialStore`).
-- [ ] Docs: DocC, `AccountSignInGuide.md`, README, CHANGELOG; gate 0/0 locally and in CI.
+- [x] Real SwiftIdentity stores as fixtures: `FileCredentialStore` in the lease and SSH tests; a table store (SwiftIdentity's own construction) where a test is about admission, not identity. `ConformanceSuite` applies to `SSHKeyStore` in 0.2.
+- [x] Docs: DocC, `AccountSignInGuide.md`, README, CHANGELOG; gate 0/0 locally. CI needs the GitHub repo.

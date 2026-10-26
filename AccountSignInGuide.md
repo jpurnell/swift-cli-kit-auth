@@ -1,0 +1,140 @@
+# Account Sign-In Guide
+
+swift-cli-kit-auth signs people in to SwiftCLIKit apps, from a local terminal or over SSH, on
+[SwiftIdentity](https://github.com/jpurnell/swift-identity). This guide covers 0.1: command-line
+sign-in (experience A) and passwords done to standard (experience C).
+
+## What lives where
+
+| Concern | Where | Why |
+|---|---|---|
+| Who someone is; how strongly that was proven | SwiftIdentity's `Authenticator` | Its core. Assurance is computed, never declared. |
+| Refusal reasons | SwiftIdentity's audit, only | A guesser learns nothing from the screen. |
+| Asking for credentials, showing prompts | `CredentialSource`s through a `SignInPresenter` | The same source works in a terminal, over SSH, and in a test. |
+| Whether the app admits someone | `Admission` | Entitlement is the app's. |
+| How long a session lasts; revocation mid-session | `AccessLease` | A long SSH session has no "next verification" of its own. |
+| Running an OAuth device flow | **Your app**, with swift-oauth | So this package never makes your app download an OAuth library it doesn't use. |
+
+## Experience A: `mytool login`
+
+```swift
+import SwiftCLIKit
+import SwiftCLIKitAuth
+import SwiftIdentity
+
+let people = try FileCredentialStore(directory: identityDirectory)
+let sessions = SessionStore(subjects: { id in people.subject(id: id) })
+var generator = SystemRandomNumberGenerator()
+
+let lease = try await CLISignIn.signIn(
+    sources: [Together(PromptedPassword(), PromptedCode())],
+    authenticator: Authenticator(stores: [people], audit: audit, now: { Date() }),
+    admission: .minimumAssurance(.multiFactor),
+    presenter: TerminalPresenter(backend: RealBackend()),
+    sessions: sessions,
+    lifetime: 8 * 3600,
+    reresolveEvery: .seconds(300),
+    generator: &generator
+)
+```
+
+`CLISignIn.signIn` tries the sources in order:
+
+- **A source that doesn't apply, or whose credentials don't resolve, passes to the next.** In
+  0.2 this is how an unrecognised SSH key falls through to a device sign-in.
+- **A source that throws stops the sign-in.** No later source is asked. A cancellation (Ctrl-C or
+  Escape) is rethrown as `SignInError.cancelled`; anything else fails the sign-in.
+- **A subject who resolves but isn't admitted fails at once.**
+- Every failure shows "Sign-in failed." and nothing more.
+
+### Passwords
+
+`PromptedPassword` reads the password with SwiftCLIKit's `SecureField`: masked, pasted whole (the
+route a password manager uses), revealed with F2, any Unicode. It passes the password on exactly
+as entered; SwiftIdentity canonicalises it as NIST SP 800-63B-4 requires.
+
+### Two factors
+
+SwiftIdentity computes assurance from the credentials presented **together**, so a password and
+a one-time code are gathered by one source:
+
+```swift
+Together(PromptedPassword(), PromptedCode())   // asks Username once, then Password, then the code
+```
+
+Asking for a code after a password has already been verified on its own doesn't raise the
+assurance of that first authentication. To raise it later, use `AccessLease.reverify`.
+
+### Device sign-in (OAuth, RFC 8628)
+
+Your app runs the flow; `DeviceSignIn` shows the code and URL through the presenter. With
+swift-oauth's `DeviceAuthorizationClient` and `SwiftOAuthIdentity`:
+
+```swift
+import SwiftOAuthClient
+import SwiftOAuthIdentity
+
+let device = DeviceSignIn { present in
+    let tokens = try await client.signIn { authorization in
+        try await present(DevicePrompt(
+            userCode: authorization.userCode,
+            verificationURI: authorization.verificationURI,
+            verificationURIComplete: authorization.verificationURIComplete
+        ))
+    }
+    return OAuthAccessToken(tokens.accessToken)
+}
+```
+
+Put an `OAuthIdentityStore` in the `Authenticator`'s stores so the token resolves to a local
+subject. A flow that fails for any reason the person didn't choose (denied, expired, a network
+error) fails the sign-in without saying which.
+
+## Experience C over SSH: the password at connect
+
+`ConnectionPassword` is an `SSHClientVerifier`, so the password is checked during SSH
+authentication and a wrong one never gets a session:
+
+```swift
+import SwiftCLIKitAuth
+import SwiftCLIKitAuthSSH
+import SwiftCLIKitSSH
+
+let server = SSHServer(
+    host: "0.0.0.0",
+    port: 2222,
+    hostKeySource: .filePath("/etc/myapp/ssh_host_ed25519_key"),
+    configuration: SSHConfiguration(authMode: .verifier(
+        ConnectionPassword(authenticator: authenticator, admission: .attribute("team", equals: "ops"))
+    ))
+)
+try await server.start { backend, session in
+    guard let who = session.authentication else { return }
+    try await MyApp(subject: who.subject).run(on: backend)
+}
+```
+
+**SSH here is not post-quantum.** A session recorded today, password included, could be
+decrypted by a future quantum computer. See SwiftCLIKit's README; if that matters, put the app
+behind OpenSSH or TLS.
+
+## The lease
+
+`AccessLease` is what an admitted session holds:
+
+- It **never keeps the credentials.** It mints a token in your `SessionStore` and re-resolves
+  that every `reresolveEvery`. The store reads the subject's status each time, so revoking the
+  subject, or `sessions.revokeAll(forSubject:)`, ends the lease within one interval.
+- `ended` yields once: `.signedOut`, `.revoked` or `.expired`.
+- `reverify(minimum:maximumAge:)` steps up before something sensitive: it returns the current
+  authentication if it's strong and recent enough, otherwise runs the sources again and accepts
+  only the same subject at the required assurance.
+- Revocation **at an identity provider** is seen at the next sign-in, not mid-session: the lease
+  asks your local roster, not the IdP, so the IdP isn't called every few minutes.
+
+## Not in 0.1
+
+- **Staying signed in between runs.** 0.1 signs in once per process. Keeping a credential on disk
+  is its own security decision; it is designed in 0.2, next to `SSHKeyStore`.
+- **Remembered SSH keys and the SSH sign-in gate** (experience B): 0.2.
+- **A QR code** for the device URL.

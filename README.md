@@ -16,6 +16,18 @@ keys.
 - **It depends on swift-cli-kit and swift-identity only.** A sign-in method's own package, such
   as swift-oauth for device sign-in, is your app's dependency, never this one's.
 
+## In 0.1
+
+- `CLISignIn.signIn` with `PromptedPassword`, `PromptedCode`, `DeviceSignIn` (your app runs the
+  OAuth flow) and `Together` for two factors; `TerminalPresenter` draws over any SwiftCLIKit
+  `TerminalBackend`, local or SSH.
+- `ConnectionPassword`: an SSH password checked during SSH authentication, so a wrong one never
+  gets a session.
+- `Admission` rules and `AccessLease`, which re-checks a session token, never the credentials,
+  so a revoked subject is signed out within one interval.
+
+See **[AccountSignInGuide.md](AccountSignInGuide.md)**.
+
 ## Requirements
 
 - Swift 6.2+
