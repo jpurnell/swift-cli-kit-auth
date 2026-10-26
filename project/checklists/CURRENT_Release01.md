@@ -60,7 +60,7 @@ extension SSHSession { var authentication: Authentication? }
       output.
 - [ ] Sources: `PromptedPassword`, `PromptedCode`, `DeviceSignIn`, `Together` (subject threaded).
 - [ ] `Admission`, each rule and `all`.
-- [ ] `AccessLease`: revocation ends it within `reresolveEvery` (injected clock); expiry; `end()`
+- [x] `AccessLease`: revocation ends it within `reresolveEvery` (injected clock); expiry; `end()`
       revokes the token; `reverify` within `maximumAge` doesn't prompt; step-up to multi-factor
       for the same subject; a different subject fails.
 - [ ] `CLISignIn`: first source that applies wins; **a source that throws never falls through**;
