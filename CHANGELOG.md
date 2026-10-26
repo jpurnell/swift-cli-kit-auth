@@ -24,3 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `Passphrase` for the username, resolved through `Authenticator.authentication(for:)` and then
   the app's `admits` rule. A wrong password, an unknown user or an unadmitted subject gets no
   session; an admitted one's sessions carry the `Authentication`.
+- `TerminalPresenter`, a line-oriented `SignInPresenter` over any `TerminalBackend`, SSH
+  included: secrets through `SecureField` (masked, pasted whole, F2 to reveal, masked again on
+  Enter), Ctrl-C and Escape cancel, end of input ends, CRLF line endings, no alternate screen,
+  and control, format and separator characters in anything shown replaced with U+FFFD.

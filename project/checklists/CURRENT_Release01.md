@@ -55,7 +55,7 @@ extension SSHSession { var authentication: Authentication? }
 ## Phases
 - [x] Core types: `SignInError`, `SignInPrompt`, `SignInPresenter`, `SignInContext`,
       `SourceRequirements`, `CredentialSource`.
-- [ ] `TerminalPresenter` over `TestBackend`: masked secret, paste whole, reveal key, Ctrl-C and
+- [x] `TerminalPresenter` over `TestBackend`: masked secret, paste whole, reveal key, Ctrl-C and
       Escape cancel, end of input, control characters in shown text neutralised, no secret in
       output.
 - [x] Sources: `PromptedPassword`, `PromptedCode`, `DeviceSignIn`, `Together` (subject threaded).
