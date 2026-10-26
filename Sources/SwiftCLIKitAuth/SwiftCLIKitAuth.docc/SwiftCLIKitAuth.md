@@ -16,9 +16,14 @@ in.
 
 ## Topics
 
+### Signing in
+
+- ``CLISignIn``
+
 ### Talking to the person
 
 - ``SignInPresenter``
+- ``TerminalPresenter``
 - ``SignInPrompt``
 - ``SignInError``
 
@@ -36,3 +41,9 @@ in.
 ### Admitting
 
 - ``Admission``
+
+### Holding the session
+
+- ``AccessLease``
+- ``LeaseEnd``
+- ``StepUp``

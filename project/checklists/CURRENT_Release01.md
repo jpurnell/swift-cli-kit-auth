@@ -63,7 +63,7 @@ extension SSHSession { var authentication: Authentication? }
 - [x] `AccessLease`: revocation ends it within `reresolveEvery` (injected clock); expiry; `end()`
       revokes the token; `reverify` within `maximumAge` doesn't prompt; step-up to multi-factor
       for the same subject; a different subject fails.
-- [ ] `CLISignIn`: first source that applies wins; **a source that throws never falls through**;
+- [x] `CLISignIn`: first source that applies wins; **a source that throws never falls through**;
       refusal shows "Sign-in failed" with the reason in audit only; admission false fails.
 - [x] `ConnectionPassword`: wrong password never gets a session; admitted session carries the
       `Authentication`; over the wire. (Takes `admits:` as a closure for now; the `Admission`

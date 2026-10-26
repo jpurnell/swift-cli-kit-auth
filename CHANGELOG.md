@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `CLISignIn.signIn`: runs sources in order. One that doesn't apply, or whose credentials don't
+  resolve, passes to the next; one that throws stops the sign-in; a resolved subject the app
+  doesn't admit fails at once. Every failure shows "Sign-in failed" and nothing more. The lease
+  it returns can step up through the same sources.
 - The package: `SwiftCLIKitAuth` and `SwiftCLIKitAuthSSH`, on swift-cli-kit 2.3.0 and
   swift-identity 0.7.1.
 - `SignInPresenter`, `SignInPrompt` and `SignInError`; `CredentialSource`, `SignInContext` and
