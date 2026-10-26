@@ -214,14 +214,20 @@ public struct SignInGate: Sendable {
         _ app: @escaping @Sendable (SSHBackend, SSHSession, AccessLease) async throws -> Void,
         backend: SSHBackend, session: SSHSession, lease: AccessLease
     ) async throws {
-        try await withThrowingTaskGroup(of: Void.self) { group in
-            group.addTask { try await app(backend, session, lease) }
-            group.addTask {
-                for await _ in lease.ended { break }
+        do {
+            try await withThrowingTaskGroup(of: Void.self) { group in
+                group.addTask { try await app(backend, session, lease) }
+                group.addTask {
+                    for await _ in lease.ended { break }
+                }
+                // Whichever finishes first decides: the app returning, or the lease ending.
+                defer { group.cancelAll() }
+                try await group.next()
             }
-            // Whichever finishes first decides: the app returning, or the lease ending.
-            defer { group.cancelAll() }
-            try await group.next()
+        } catch {
+            // However the app ended, its session is signed out before the error goes on.
+            await lease.end()
+            throw error
         }
         await lease.end()
     }

@@ -185,6 +185,24 @@ struct SignInGateTests {
         #expect(calls.value == 0)
     }
 
+    @Test("An app that throws still signs its session out")
+    func appThrowsEndsLease() async throws {
+        let harness = try Harness()
+        defer { harness.remove() }
+        struct AppFailed: Error {}
+        let leases = NIOLockedValueBox<AccessLease?>(nil)
+
+        let handler = harness.gate([Self.device(Counter())]).wrap { _, _, lease in
+            leases.withLockedValue { $0 = lease }
+            throw AppFailed()
+        }
+        await #expect(throws: AppFailed.self) {
+            try await handler(try Self.backend(SessionRecord()), Self.session(nil))
+        }
+        let lease = try #require(leases.withLockedValue { $0 })
+        #expect(await !lease.isActive)
+    }
+
     @Test("When the lease ends mid-session, the app is cancelled")
     func leaseEndEndsSession() async throws {
         let harness = try Harness()
