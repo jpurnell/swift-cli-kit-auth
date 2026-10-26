@@ -1,7 +1,7 @@
 # Design Proposal: Remembered command-line sign-in
 
 **Date:** 2026-10-26
-**Status:** Proposed — awaiting the user's approval
+**Status:** Approved 2026-10-26 — all three open questions answered as proposed (§16)
 **Author:** Claude (session with Justin Purnell)
 **Parent:** SwiftCLIKit `project/plans/proposals/2026-10-20_SwiftCLIKitAuth.md`, experience A
 ("later runs are signed in"), deferred from 0.1 (rev 9 scope note).
@@ -124,7 +124,28 @@ None new.
 
 ## 16. Open Questions
 
-1. Approve "device-issued bearer tokens only, never passwords or codes"?
-2. Refresh: leave it in the app's closure (proposed), or model it here?
-3. Default location: `~/.config/<app>/token`, left for the app to choose (proposed), or
-   chosen here?
+1. ~~Approve "device-issued bearer tokens only, never passwords or codes"?~~ **Yes** — "only
+   remember tokens, that's safer."
+2. ~~Refresh: leave it in the app's closure (proposed), or model it here?~~ **In the app's
+   closure** — "that's cleaner."
+3. ~~Default location: `~/.config/<app>/token`, left for the app to choose (proposed), or
+   chosen here?~~ **The app chooses.** `FileTokenCache(url:)` has no default.
+
+## 17. Decided while building
+
+- **The outcome hook.** A source learns how its credentials fared through an internal
+  `OutcomeObservingSource` protocol whose `gather` returns the credentials with a callback
+  carrying the outcome (`unresolved`, `notAdmitted`, `admitted`), so the token string a
+  `DeviceSignIn` produced stays with that one run instead of being stored on a shared value.
+  `SignInRun` calls it; `CredentialSource` is unchanged.
+- **Not inside `Together`, not on step-up.** A remembering source nested in `Together`, or asked by
+  `AccessLease.reverify`, presents its credentials but saves and clears nothing: the hook is
+  called only by the sign-in loop.
+- **A cache readable by others is refused, not treated as empty.** §6 said a cache that can't be
+  read is empty. That holds for a file that can't be opened; but a token file others can read may
+  already be exposed, and quietly replacing it would hide that. So `load` and `save` throw
+  `readableByOthers`, the sign-in fails ("Sign-in failed." to the person, the path to the log),
+  and the person fixes or deletes the file.
+- **The directory.** Created 0700 if missing. An existing directory others can *write* is refused
+  (another user could swap the file between write and rename); one others can merely read is
+  allowed, since the file itself is 0600. A symlink at the token path is refused.
