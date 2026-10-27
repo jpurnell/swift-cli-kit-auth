@@ -39,7 +39,6 @@ public struct TerminalPresenter: SignInPresenter {
     private let revealKey: Key?
 
     /// Erases the whole line the cursor is on (ECMA-48 EL 2), leaving the cursor where it is.
-    private static let eraseLine = "\u{1B}[2K"
     /// What ends a line on a raw terminal.
     private static let newline = "\r\n"
     /// The width to assume when the terminal reports none.
@@ -171,6 +170,20 @@ public struct TerminalPresenter: SignInPresenter {
         backend.write(Self.neutralised(message) + Self.newline)
     }
 
+    /// Watches for Ctrl-C or Escape, ignoring any other key, until the calling task is cancelled.
+    ///
+    /// The backend's `nextKey()` returns `nil` on cancellation without taking a key (SwiftCLIKit
+    /// 2.5.0 for a local terminal; over SSH and in `TestBackend` since 2.3.0), so the app's next
+    /// key isn't lost when the watch stops.
+    /// - Throws: ``SignInError/cancelled`` on Ctrl-C or Escape; ``SignInError/inputEnded`` if input
+    ///   ends first.
+    public func watchForCancel() async throws {
+        while let key = await backend.nextKey() {
+            if key == .ctrlC || key == .escape { throw SignInError.cancelled }
+        }
+        guard Task.isCancelled else { throw SignInError.inputEnded }
+    }
+
     // MARK: - Drawing
 
     /// Redraws a text prompt's line, showing as much of the end of the text as fits.
@@ -210,7 +223,7 @@ public struct TerminalPresenter: SignInPresenter {
 
     /// Returns to the start of the line, erases it, and writes `line`.
     private func redraw(_ line: String) {
-        backend.write("\r" + Self.eraseLine + line)
+        backend.write("\r" + ANSICodes.eraseLine + line)
     }
 
     /// Masks and ends a secret prompt the person cancelled.
