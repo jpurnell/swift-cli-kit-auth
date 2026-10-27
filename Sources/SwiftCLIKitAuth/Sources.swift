@@ -201,21 +201,48 @@ public struct DeviceSignIn: CredentialSource, OutcomeObservingSource {
             ))
             await presenter.progress("Waiting for approval…")
         }
+        let kind = self.kind
         do {
-            switch kind {
-            case .plain(let flow):
-                return .unobserved([try await flow(present)])
-            case .remembering(let cache, let flow, let credential):
-                let token = try await flow(present)
-                return ObservedCredentials(credentials: [credential(token)]) { outcome in
-                    guard outcome == .admitted else { return }
-                    await Self.save(token, in: cache)
+            return try await Self.untilCancelled(presenter) {
+                switch kind {
+                case .plain(let flow):
+                    return .unobserved([try await flow(present)])
+                case .remembering(let cache, let flow, let credential):
+                    let token = try await flow(present)
+                    return ObservedCredentials(credentials: [credential(token)]) { outcome in
+                        guard outcome == .admitted else { return }
+                        await Self.save(token, in: cache)
+                    }
                 }
             }
         } catch let error as SignInError {
             throw error
+        } catch is CancellationError {
+            throw SignInError.cancelled
         } catch {
             throw SignInError.failed
+        }
+    }
+
+    /// Runs `work` while the presenter watches for the person cancelling. Whichever ends first
+    /// decides: the work's result, or the person's cancellation, which cancels the work (the flow's
+    /// polling must honour task cancellation, as `Task.sleep` does).
+    private static func untilCancelled(
+        _ presenter: any SignInPresenter,
+        _ work: @escaping @Sendable () async throws -> ObservedCredentials
+    ) async throws -> ObservedCredentials {
+        try await withThrowingTaskGroup(of: ObservedCredentials?.self) { group in
+            group.addTask { try await work() }
+            group.addTask {
+                try await presenter.watchForCancel()
+                return nil
+            }
+            defer { group.cancelAll() }
+            // The watch returns without throwing only once cancelled, so the work decides.
+            while let finished = try await group.next() {
+                if let credentials = finished { return credentials }
+            }
+            throw SignInError.cancelled
         }
     }
 

@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Cancelling a device sign-in while it waits.** Ctrl-C or Escape while a `DeviceSignIn` polls
+  for approval cancels the sign-in and the flow's task; input ending ends it. When approval comes
+  first, the watch stops without taking the app's next key.
+  - `SignInPresenter.watchForCancel()`, with a default that never reports a cancellation, so
+    existing presenters compile unchanged. `TerminalPresenter` watches for Ctrl-C and Escape.
+  - A flow that throws `CancellationError` now ends the sign-in as `SignInError.cancelled`
+    rather than `.failed`.
+
+### Changed
+
+- Requires swift-cli-kit 2.5.0, whose local-terminal `nextKey()` can be cancelled; before it, the
+  watch would have held a local sign-in open after approval until a key was pressed.
+- `TerminalPresenter` uses swift-cli-kit's `ANSICodes.eraseLine` in place of its own.
+- The SSH over-the-wire tests use swift-cli-kit 2.4.0's public `SSHServer.listen`, and no longer
+  import SwiftCLIKitSSH with `@testable`.
+
 ## [0.3.0] - 2026-10-26
 
 ### Added

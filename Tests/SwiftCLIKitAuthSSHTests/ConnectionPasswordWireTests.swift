@@ -9,7 +9,7 @@ import NIOCore
 import NIOPosix
 import NIOSSH
 import SwiftIdentity
-@testable import SwiftCLIKitSSH
+import SwiftCLIKitSSH
 import SwiftCLIKitAuthSSH
 
 /// Offers one password, then gives up.
@@ -110,12 +110,11 @@ struct ConnectionPasswordWireTests {
         let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
         let sessions = Sessions()
         let server = SSHServer(port: 0, configuration: SSHConfiguration(authMode: .verifier(verifier)))
-        let listener = try await server.bindListener(group: group) { _, session in
+        let listener = try await server.listen { _, session in
             sessions.record(session)
         }
         do {
-            let port = try #require(listener.localAddress?.port)
-            try await body(port, group)
+            try await body(listener.port, group)
         } catch {
             try await listener.close()
             try await group.shutdownGracefully()

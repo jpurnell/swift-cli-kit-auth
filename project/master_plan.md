@@ -99,6 +99,7 @@ SignInPresenter ◀────────────────────�
 - [x] 0.1.0 released 2026-10-25: public repository `jpurnell/swift-cli-kit-auth`, proprietary licence (the user's decisions), CI green.
 - [x] 0.2.0 released 2026-10-26 (PR #1), CI on `main` green.
 - [x] 0.3.0 released 2026-10-26 (PR #2), CI on `main` green.
+- [ ] 0.4: cancelling a device sign-in while it waits (see Roadmap).
 
 ---
 
@@ -151,6 +152,13 @@ places the file).
 - [x] `TokenCache`, `FileTokenCache`
 - [x] `RememberedToken`, `DeviceSignIn(remembering:credential:_:)`
 
+### 0.4: cancelling a device sign-in while it waits
+Raised after 0.3.0. Needed SwiftCLIKit 2.5.0 first: a local terminal's `nextKey()` blocked a
+thread and ignored cancellation, so a watch for Ctrl-C would have outlasted the sign-in and taken
+the app's next key. 2.4.0's `SSHServer.listen` and `ANSICodes.eraseLine` came from the same list.
+- [x] `SignInPresenter.watchForCancel()`; `DeviceSignIn` races its flow against it
+- [x] SSH wire tests without `@testable`; `ANSICodes.eraseLine`
+
 ### Future
 - Proposal §14: SSH certificates (blocked upstream), biometric unlock, a SwiftUI presenter,
   authorization-code + loopback for desktop CLIs, Keychain-backed stores (including a Keychain
@@ -158,4 +166,4 @@ places the file).
 
 ---
 
-**Last Updated:** 2026-10-26 (0.3.0 released after the merge's CI passed. Earlier the same day: 0.3 built from its approved proposal; 0.2.0 released, its roadmap items ticked, which the 0.2 PR left open. 0.1.0 released 2026-10-25.)
+**Last Updated:** 2026-10-27 (0.4 built: a device sign-in can be cancelled while it waits, on SwiftCLIKit 2.4.0 and 2.5.0, both made for it.) Earlier: 2026-10-26 (0.3.0 released after the merge's CI passed. Earlier the same day: 0.3 built from its approved proposal; 0.2.0 released, its roadmap items ticked, which the 0.2 PR left open. 0.1.0 released 2026-10-25.)

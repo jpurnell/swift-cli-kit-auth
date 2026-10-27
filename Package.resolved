@@ -1,5 +1,5 @@
 {
-  "originHash" : "503dd0919620f9271459cd78b07229b5c30da358e7e06c70b5f0178943c91195",
+  "originHash" : "f63191300b429cbc2c2f6b370a4785f052ceff94f10d9c50eb6a69dcff5cd7a6",
   "pins" : [
     {
       "identity" : "swift-asn1",
@@ -24,8 +24,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/jpurnell/swift-cli-kit.git",
       "state" : {
-        "revision" : "b910fecbdf913c779bbd41934627c39bafe400ff",
-        "version" : "2.3.0"
+        "revision" : "1cabafb214c3ee620b74fb68fedc7dcc729586a2",
+        "version" : "2.5.0"
       }
     },
     {

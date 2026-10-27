@@ -54,4 +54,24 @@ public protocol SignInPresenter: Sendable {
     /// Says what is happening, such as "Waiting for approval…".
     /// - Parameter message: The status.
     func progress(_ message: String) async
+
+    /// Watches for the person cancelling while something else runs, such as a device sign-in
+    /// waiting for approval.
+    ///
+    /// It returns only once the calling task is cancelled, which is how the caller stops the
+    /// watch when the work finishes first; a presenter must not take input it doesn't use after
+    /// that. The default, for a presenter that can't watch, just waits for that cancellation.
+    /// - Throws: ``SignInError/cancelled`` when the person cancels; ``SignInError/inputEnded`` when
+    ///   input ends.
+    func watchForCancel() async throws
+}
+
+extension SignInPresenter {
+    /// Waits for the calling task to be cancelled: a presenter that can't watch for the person
+    /// cancelling never reports it.
+    public func watchForCancel() async throws {
+        while !Task.isCancelled {
+            try? await Task.sleep(for: .seconds(3600)) // silent: the sleep ends early only by cancellation, which the loop checks
+        }
+    }
 }
