@@ -15,7 +15,7 @@ let package = Package(
         .library(name: "SwiftCLIKitAuthSSH", targets: ["SwiftCLIKitAuthSSH"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/jpurnell/swift-cli-kit.git", from: "2.4.0"),
+        .package(url: "https://github.com/jpurnell/swift-cli-kit.git", from: "2.5.0"),
         .package(url: "https://github.com/jpurnell/swift-identity.git", from: "0.7.1"),
         // Apple's, and already resolved through swift-cli-kit, so it adds nothing to download.
         .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.4.3"),

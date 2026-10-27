@@ -91,6 +91,14 @@ Put an `OAuthIdentityStore` in the `Authenticator`'s stores so the token resolve
 subject. A flow that fails for any reason the person didn't choose (denied, expired, a network
 error) fails the sign-in without saying which.
 
+**Cancelling while it waits.** While the flow polls for approval, Ctrl-C or Escape cancels the
+sign-in (`SignInError.cancelled`) and cancels the flow's task, which stops its polling; input
+ending (the SSH client disconnecting) ends it as `SignInError.inputEnded`. Other keys are
+ignored. If approval comes first, the watch stops without taking the app's next key. Your flow
+must honour task cancellation; swift-oauth's does, since it waits with `Task.sleep`. A presenter
+of your own gets this through `SignInPresenter.watchForCancel()`; the default never reports a
+cancellation, so the flow simply runs to its end.
+
 ### Staying signed in between runs
 
 After `mytool login`, later runs can be signed in without asking, as `gh` and the AWS CLI are.
