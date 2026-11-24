@@ -15,12 +15,12 @@ let package = Package(
         .library(name: "SwiftCLIKitAuthSSH", targets: ["SwiftCLIKitAuthSSH"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/jpurnell/swift-cli-kit.git", from: "2.5.0"),
-        .package(url: "https://github.com/jpurnell/swift-identity.git", from: "0.7.1"),
+        .package(url: "https://github.com/jpurnell/swift-cli-kit.git", from: "2.8.0"),
+        .package(url: "https://github.com/jpurnell/swift-identity.git", from: "0.11.0"),
         // Apple's, and already resolved through swift-cli-kit, so it adds nothing to download.
         .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.4.3"),
         // Apple's, and already resolved through swift-identity: SHA-256 for SSH key fingerprints.
-        .package(url: "https://github.com/apple/swift-crypto.git", from: "3.0.0"),
+        .package(url: "https://github.com/apple/swift-crypto.git", from: "5.1.2"),
         // Already resolved through swift-cli-kit (swift-nio-ssh is its dependency, swift-nio is
         // swift-nio-ssh's), so they add nothing to download. Named only so the SSH tests can
         // drive a real NIOSSH client; no library target links them.

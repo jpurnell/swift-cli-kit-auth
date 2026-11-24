@@ -3,13 +3,13 @@
 Account sign-in for [SwiftCLIKit](https://github.com/jpurnell/swift-cli-kit) apps, on
 [SwiftIdentity](https://github.com/jpurnell/swift-identity).
 
-**Status: 0.4.0.** Command-line sign-in (a password, a one-time code, or an OAuth device
+**Status: 0.5.0.** Command-line sign-in (a password, a one-time code, or an OAuth device
 sign-in) that can stay signed in between runs, SSH password sign-in, and SSH apps with accounts:
 remembered SSH keys and an SSH sign-in gate.
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/jpurnell/swift-cli-kit-auth.git", from: "0.4.0"),
+    .package(url: "https://github.com/jpurnell/swift-cli-kit-auth.git", from: "0.5.0"),
 ]
 ```
 
@@ -45,7 +45,7 @@ dependencies: [
 ## What 0.4 adds
 
 - Ctrl-C or Escape cancels a device sign-in while it waits for approval, and stops the flow's
-  polling. Requires swift-cli-kit 2.5.0.
+  polling. Requires swift-cli-kit 2.8.0 and swift-crypto 5.1.2 or later.
 
 See **[AccountSignInGuide.md](AccountSignInGuide.md)**.
 

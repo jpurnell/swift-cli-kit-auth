@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-23
+
+### Changed
+- **swift-crypto minimum is now 5.1.2** (`from: "5.1.2"`; was `from: "3.0.0"`, which allowed only 3.x), **swift-cli-kit's minimum is now 2.8.0** (was 2.5.0) and **swift-identity's minimum is now 0.11.0** (was 0.7.1); both of those releases allow swift-crypto 5. A crypto release is usually a security fix, so the owner's rule is to stay current. **A package that depends on swift-cli-kit-auth 0.5.0 must itself allow swift-crypto 5.1.2 or later.** No source or public API change; the tests pass on 5.1.2.
+
 ## [0.4.0] - 2026-10-27
 
 ### Added
